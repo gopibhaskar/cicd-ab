@@ -9,8 +9,8 @@ def lastSuccessfulCommit = getLastSuccessfulCommit()
 def currentCommit = commitHashForBuild( currentBuild.rawBuild )
 
 node {
-    sh 'export buildNumber=echo $(env.BUILD_NUMBER)'
-    sh 'export tagName= echo ${env.JOB_NAME}-${env.BUILD_TIMESTAMP}'
+    sh 'export buildNumber=echo $BUILD_NUMBER'
+    sh 'export tagName= echo $env.JOB_NAME-$env.BUILD_TIMESTAMP'
     stage('Git checkout') { // for display purposes
         checkout scm
         sh 'git log --format="%ae" | head -1 > commit-author.txt'
