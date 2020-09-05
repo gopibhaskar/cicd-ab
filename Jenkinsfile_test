@@ -1,7 +1,7 @@
 #!groovy
 def tagName
 def branchName=env.BRANCH_NAME
-def buildNumber
+def buildNumber=env.BUILD_NUMBER
 //def lastbuildNumber = Jenkins.instance.getItem('jobName').getItem('branchName').lastSuccessfulBuild.number
 def commit_username
 def commit_Email
@@ -9,7 +9,7 @@ def lastSuccessfulCommit = getLastSuccessfulCommit()
 def currentCommit = commitHashForBuild( currentBuild.rawBuild )
 
 node {
-    sh 'export buildNumber=$(BUILD_NUMBER)'
+    sh 'export buildNumber=$(buildNumber)'
     sh 'export tagName=${env.JOB_NAME}-${env.BUILD_TIMESTAMP}'
     stage('Git checkout') { // for display purposes
         checkout scm
