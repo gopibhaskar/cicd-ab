@@ -13,7 +13,7 @@ node {
     //sh 'export buildNumber=$(buildNumber)'
 	set "buildNumber=%BUILD_NUMBER%"
         echo %BUILD_NO%
-	set "tagName= %JOB_NAME%
+	set "tagName= %JOB_NAME%"
         echo %BUILD_NUMBER%
         //sh 'export tagName=${env.JOB_NAME}-${env.BUILD_TIMESTAMP}'
         stage('Git checkout') { // for display purposes
