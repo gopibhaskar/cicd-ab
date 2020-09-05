@@ -64,8 +64,8 @@ node {
     }
     stage("Copy war to workspace"){
         workspace= pwd()
-        sh """find -type f -name "*war" -exec cp {}  $workspace/ \; """
-		sh 'find . -name"*.war" -exec cp $pwd {} ";"'
+        //sh """find -type f -name "*war" -exec cp {}  $workspace/ \; """
+	sh 'find . -name"*.war" -exec cp $pwd {} ";"'
     }
     stage("Deploy war to Docker image"){
         try {
