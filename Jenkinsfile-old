@@ -1,0 +1,119 @@
+#!groovy
+def tagName="""${JOB_NAME}-${BUILD_TIMESTAMP}"""
+def branchName;
+def buildNumber= """${BUILD_NUMBER}"""
+//def lastbuildNumber = Jenkins.instance.getItem('jobName').getItem('branchName').lastSuccessfulBuild.number
+def commit_username;
+def commit_Email;
+def lastSuccessfulCommit = getLastSuccessfulCommit();
+def currentCommit = commitHashForBuild( currentBuild.rawBuild );
+
+node {
+sh 'export buildNumber=$(BUILD_NUMBER)'
+    stage('Git checkout') { // for display purposes
+        checkout scm
+        sh 'git log --format="%ae" | head -1 > commit-author.txt'
+        commit_Email = readFile('commit-author.txt').trim()
+        branchName = env.BRANCH_NAME
+        sh 'git show -s --pretty=%an > committer.txt'
+        commit_username = readFile('committer.txt').trim()
+        echo lastSuccessfulCommit
+        echo currentCommit
+        echo branchName
+        echo commit_username
+        echo commit_Email
+    }
+    stage("Build and Compile Stage"){
+        try {
+            sh "./gradlew compileTestJava"
+        } catch (err) {
+            currentBuild.result='FAILURE'
+            notifyBuild(currentBuild.result, "At Stage Compile ", "", commit_Email)
+            throw err
+        }
+    }
+    stage("Assemble Stage"){
+        try {
+            sh "./gradlew assemble"
+        } catch (err) {
+            currentBuild.result='FAILURE'
+            notifyBuild(currentBuild.result, "At Stage Assemble ", "", commit_Email)
+            throw err
+        }
+    }
+
+    stage("Test Stage"){
+        try {
+            sh "./gradlew test"
+        } catch (err) {
+            currentBuild.result='FAILURE'
+            notifyBuild(currentBuild.result, "At Stage Test", "", commit_Email)
+            throw err
+        }
+    }
+    stage("Sonar Security code scan") {
+        try {
+                withSonarQubeEnv("SonarQContainer") { // Will pick the global server connection you have configured
+                    sh './gradlew sonarqube'
+                }
+        }catch (err) {
+            currentBuild.result='FAILURE'
+            notifyBuild(currentBuild.result, "At Stage Test", "", commit_Email)
+            throw err
+        }
+    }
+    stage("Deploy war to Docker image"){
+        try {
+            sh "docker build -t gopi:$buildNumber ."
+        } catch (err) {
+            currentBuild.result='FAILURE'
+            notifyBuild(currentBuild.result, "At Stage Docker build", "", commit_Email)
+            throw err
+        }
+    }
+    stage("Deploy Environment") {
+        try {
+            sh "ansible-playbook -i localhost deployment.yml"
+        }catch (err) {
+            currentBuild.result='FAILURE'
+            notifyBuild(currentBuild.result, "At Stage Test", "", commit_Email)
+            throw err
+        }
+    }
+
+    stage('Selenium NG Test') {
+            try {
+                sh "./gradlew test"
+            } catch (err) {
+                throw  err
+
+            } finally {
+                publishHTML(target: [
+                        reportDir  : 'target/site/serenity',
+                        reportFiles: 'index.html',
+                        reportName : "UI tests report"
+                ])
+            }
+        }
+        stage('Results') {
+            junit '**/target/failsafe-reports/*.xml'
+        }
+    }
+
+def getLastSuccessfulCommit() {
+    def lastSuccessfulHash = null
+    def lastSuccessfulBuild = currentBuild.rawBuild.getPreviousSuccessfulBuild()
+    if ( lastSuccessfulBuild ) {
+        lastSuccessfulHash = commitHashForBuild( lastSuccessfulBuild )
+    }
+    return lastSuccessfulHash
+}
+
+/**
+ * Gets the commit hash from a Jenkins build object, if any
+ */
+@NonCPS
+def commitHashForBuild( build ) {
+    def scmAction = build?.actions.find { action -> action instanceof jenkins.scm.api.SCMRevisionAction }
+    return scmAction?.revision?.hash
+}
