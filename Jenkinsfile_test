@@ -1,33 +1,28 @@
 #!groovy
-def tagName
-def branchName
 def buildNumber
 //def lastbuildNumber = Jenkins.instance.getItem('jobName').getItem('branchName').lastSuccessfulBuild.number
-def commit_username
-def commit_Email
 def lastSuccessfulCommit = getLastSuccessfulCommit()
 def currentCommit = commitHashForBuild( currentBuild.rawBuild )
+def workspace
+def props=''
+def tagName="""${JOB_NAME}-${BUILD_TIMESTAMP}"""
+def branchName
+def commit_username
+def commit_Email
+def imageName
 
 node {
- 
-    //sh 'export buildNumber=$(buildNumber)'
-//	set "buildNumber=%BUILD_NUMBER%"
-    //    echo %BUILD_NO%
-	//set "tagName= %JOB_NAME%"
-    //    echo %BUILD_NUMBER%
-        //sh 'export tagName=${env.JOB_NAME}-${env.BUILD_TIMESTAMP}'
-        stage('Git checkout') { // for display purposes
-        
-	props = readProperties  file: """deploy.properties"""	
-	checkout scm
-	//branchName=master
-	//tagName=test
+    stage('Checkout Code') {
+        props = readProperties  file: """deploy.properties"""
+        checkout scm
+
         sh 'git log --format="%ae" | head -1 > commit-author.txt'
         commit_Email = readFile('commit-author.txt').trim()
         sh 'git show -s --pretty=%an > committer.txt'
         commit_username = readFile('committer.txt').trim()
+        buildNumber = ${BUILD_NUMBER}
         echo lastSuccessfulCommit
-	echo buildNumber
+        echo buildNumber
         echo currentCommit
         echo branchName
         echo commit_username
@@ -78,9 +73,12 @@ node {
         //sh """find -type f -name "*war" -exec cp {}  $workspace/ \; """
 	sh 'find . -name"*.war" -exec cp $pwd {} ";"'
     }
-    stage("Deploy war to Docker image"){
+    stage("Deploy a war to Docker image and Push"){
         try {
-            sh """docker build -t $tagName:$buildNumber -f MyDocker"""
+            imageName="""${props['registry']}/${props['appname']}:${buildNumber}"""
+            sh """docker build -t ${imageName} -f MyDocker"""
+            sh """docker push ${imageName}"""
+
         } catch (err) {
             currentBuild.result='FAILURE'
             notifyBuild(currentBuild.result, "At Stage Docker build", "", commit_Email)
@@ -89,7 +87,7 @@ node {
     }
     stage("Deploy Environment") {
         try {
-            sh "ansible-playbook -i localhost deployment.yml"
+            sh "ansible-playbook -i localhost deployment.yml -e versionNum = ${buildNumber}"
         }catch (err) {
             currentBuild.result='FAILURE'
             notifyBuild(currentBuild.result, "At Stage Test", "", commit_Email)
@@ -121,11 +119,10 @@ def notifyBuild(String buildStatus, String buildFailedAt, String bodyDetails, St
 	def details = """Please find attahcment for log and Check console output at ${BUILD_URL}\n \n "${bodyDetails}"
 	\n"""
 	emailext attachLog: true,
-	notifyEveryUnstableBuild: true,
 	recipientProviders: [[$class: 'CulpritsRecipientProvider'], [$class: 'DevelopersRecipientProvider'], [$class: 'RequesterRecipientProvider']],
 	body: details, 
 	subject: """${buildStatus}: Job ${JOB_NAME} [${BUILD_NUMBER}] ${buildFailedAt}""", 
-	to: """email@server.com,${commit_Email}"""
+	to: """${commit_Email}"""
 }
 
 def getLastSuccessfulCommit() {
