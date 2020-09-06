@@ -63,12 +63,13 @@ node {
     }
     stage("Copy war to workspace"){
         workspace= pwd()
-	    sh 'find . -name "*.war" -exec cp ${pwd} {} ";"'
+	    
+	    sh 'find . -name "*.war" -exec cp ${workspace} {} ";"'
     }
     stage("Deploy a war to Docker image and Push"){
         try {
             imageName="""${props['registry']}/${props['appname']}:${buildNumber}"""
-            sh """docker build -t ${imageName} -f MyDocker"""
+            sh """docker build -t '${imageName}' -f MyDocker"""
             sh """docker push ${imageName}"""
 
         } catch (err) {
