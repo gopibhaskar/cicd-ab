@@ -1,7 +1,6 @@
 #!groovy
 def buildNumber
 //def lastbuildNumber = Jenkins.instance.getItem('jobName').getItem('branchName').lastSuccessfulBuild.number
-def lastSuccessfulCommit = getLastSuccessfulCommit()
 def currentCommit = commitHashForBuild( currentBuild.rawBuild )
 def workspace
 def props=''
@@ -18,12 +17,11 @@ node {
 
         sh 'git log --format="%ae" | head -1 > commit-author.txt'
         commit_Email = readFile('commit-author.txt').trim()
+	branchName=sh(returnStdout: true, script: 'git symbolic-ref --short HEAD').trim()
         sh 'git show -s --pretty=%an > committer.txt'
         commit_username = readFile('committer.txt').trim()
         buildNumber = """${BUILD_NUMBER}"""
-        echo lastSuccessfulCommit
         echo buildNumber
-        echo currentCommit
         echo branchName
         echo commit_username
         echo commit_Email
@@ -71,7 +69,7 @@ node {
     stage("Copy war to workspace"){
         workspace= pwd()
         //sh """find -type f -name "*war" -exec cp {}  $workspace/ \; """
-	sh 'find . -name"*.war" -exec cp $pwd {} ";"'
+	sh 'find . -name "*.war" -exec cp $pwd {} ";"'
     }
     stage("Deploy a war to Docker image and Push"){
         try {
@@ -123,22 +121,4 @@ def notifyBuild(String buildStatus, String buildFailedAt, String bodyDetails, St
 	body: details, 
 	subject: """${buildStatus}: Job ${JOB_NAME} [${BUILD_NUMBER}] ${buildFailedAt}""", 
 	to: """${commit_Email}"""
-}
-
-def getLastSuccessfulCommit() {
-    def lastSuccessfulHash = null
-    def lastSuccessfulBuild = currentBuild.rawBuild.getPreviousSuccessfulBuild()
-    if ( lastSuccessfulBuild ) {
-        lastSuccessfulHash = commitHashForBuild( lastSuccessfulBuild )
-    }
-    return lastSuccessfulHash
-}
-
-/**
- * Gets the commit hash from a Jenkins build object, if any
- */
-@NonCPS
-def commitHashForBuild( build ) {
-    def scmAction = build?.actions.find { action -> action instanceof jenkins.scm.api.SCMRevisionAction }
-    return scmAction?.revision?.hash
 }
