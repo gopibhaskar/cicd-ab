@@ -1,7 +1,6 @@
 #!groovy
 def buildNumber
 //def lastbuildNumber = Jenkins.instance.getItem('jobName').getItem('branchName').lastSuccessfulBuild.number
-def currentCommit = commitHashForBuild( currentBuild.rawBuild )
 def workspace
 def props=''
 def tagName="""${JOB_NAME}-${BUILD_TIMESTAMP}"""
