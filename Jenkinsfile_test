@@ -20,7 +20,7 @@ node {
         commit_Email = readFile('commit-author.txt').trim()
         sh 'git show -s --pretty=%an > committer.txt'
         commit_username = readFile('committer.txt').trim()
-        buildNumber = ${BUILD_NUMBER}
+        buildNumber = """${BUILD_NUMBER}"""
         echo lastSuccessfulCommit
         echo buildNumber
         echo currentCommit
