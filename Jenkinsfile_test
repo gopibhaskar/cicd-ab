@@ -1,10 +1,8 @@
 #!groovy
 def buildNumber
-//def lastbuildNumber = Jenkins.instance.getItem('jobName').getItem('branchName').lastSuccessfulBuild.number
 def workspace
 def props=''
 def tagName="""${JOB_NAME}-${BUILD_TIMESTAMP}"""
-def branchName
 def commit_username
 def commit_Email
 def imageName
@@ -16,12 +14,10 @@ node {
 
         sh 'git log --format="%ae" | head -1 > commit-author.txt'
         commit_Email = readFile('commit-author.txt').trim()
-	branchName=sh(returnStdout: true, script: 'git symbolic-ref --short HEAD').trim()
         sh 'git show -s --pretty=%an > committer.txt'
         commit_username = readFile('committer.txt').trim()
         buildNumber = """${BUILD_NUMBER}"""
         echo buildNumber
-        echo branchName
         echo commit_username
         echo commit_Email
     }
