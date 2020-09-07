@@ -33,6 +33,7 @@ node {
     }
     stage("Assemble Stage"){
         try {
+	    sh "./gradlew clean war"
             sh "./gradlew clean assemble"
         } catch (err) {
             currentBuild.result='FAILURE'
