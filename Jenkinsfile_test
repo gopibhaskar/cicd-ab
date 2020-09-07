@@ -80,7 +80,6 @@ node {
     }
     stage("Deploy Environment") {
         try {
-	    sh """source hash_code.sh"""
             sh "ansible-playbook -i localhost deployment.yml -e versionNum=${buildNumber}"
         }catch (err) {
             currentBuild.result='FAILURE'
