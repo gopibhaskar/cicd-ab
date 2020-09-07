@@ -4,16 +4,6 @@
   
 - name: Create ElasticSearch if mandatory elastic file exists
   command: "kubectl apply -f elasticsearch.yml"
-  when: elasticsearch.yml.stat.exists == True
-  
- 
-//- name: Check port numbers is accessible from current host
-//  wait_for:
-//    host: localhost
-//    port: "9200"
-//    state: started        
-//    delay: 0              
-//    timeout: 20 
 
 - name: Apply Configmap for logstash if  logstash-config file exists
   command: "kubectl apply -f logstash-config.yml"
