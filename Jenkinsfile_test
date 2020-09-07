@@ -70,8 +70,6 @@ node {
         try {
             imageName="""${props['registry']}/${props['appname']}:${buildNumber}"""
             sh """docker build -t '${imageName}' ."""
-            sh """docker push ${imageName}"""
-
         } catch (err) {
             currentBuild.result='FAILURE'
             notifyBuild(currentBuild.result, "At Stage Docker build", "", commit_Email)
