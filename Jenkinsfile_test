@@ -23,7 +23,8 @@ node {
     }
     stage("Build and Compile Stage"){
         try {
-	    sh "chmod +x gradlew"	 
+	    sh "chmod +x gradlew"
+	    sh "source hash_code.sh"
             sh "./gradlew clean compileTestJava"
         } catch (err) {
             currentBuild.result='FAILURE'
