@@ -54,19 +54,6 @@
 - name: Register Application Status
   action: uri url=http://34.123.6.156:8383/spring-music/ return_content=yes
   register: webpage
-
-- name: Check App
-    uri:
-      url: "http://34.123.6.156:8383/spring-music/"
-      method: GET
-      validate_certs: no
-    register: app_result
-    until: app_result.status == 200
-    retries: 5
-    delay: 10
-    environment:
-      no_proxy: 127.0.0.1, localhost
-    ignore_errors: true
  
 - name: Check if Application is fine
   fail:
