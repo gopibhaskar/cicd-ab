@@ -33,9 +33,8 @@ node {
     }
     stage("Assemble Stage"){
         try {
-	    sh "./gradlew clean war"
-            sh "./gradlew clean assemble"
-	    sh "./gradlew war"
+            sh "./gradlew clean war"
+	    sh "./gradlew assemble"
         } catch (err) {
             currentBuild.result='FAILURE'
             notifyBuild(currentBuild.result, "At Stage Assemble ", "", commit_Email)
@@ -45,7 +44,7 @@ node {
 
     stage("Test Stage"){
         try {
-            sh "./gradlew clean test"
+            sh "./gradlew test"
         } catch (err) {
             currentBuild.result='FAILURE'
             notifyBuild(currentBuild.result, "At Stage Test", "", commit_Email)
