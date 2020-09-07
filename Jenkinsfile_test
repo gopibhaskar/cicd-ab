@@ -24,7 +24,7 @@ node {
     stage("Build and Compile Stage"){
         try {
 	    sh "chmod +x gradlew"
-            sh "./gradlew compileTestJava"
+            sh "./gradlew clean compileTestJava"
         } catch (err) {
             currentBuild.result='FAILURE'
             notifyBuild(currentBuild.result, "At Stage Compile ", "", commit_Email)
@@ -33,7 +33,7 @@ node {
     }
     stage("Assemble Stage"){
         try {
-            sh "./gradlew assemble"
+            sh "./gradlew clean assemble"
         } catch (err) {
             currentBuild.result='FAILURE'
             notifyBuild(currentBuild.result, "At Stage Assemble ", "", commit_Email)
@@ -43,7 +43,7 @@ node {
 
     stage("Test Stage"){
         try {
-            sh "./gradlew test"
+            sh "./gradlew clean test"
         } catch (err) {
             currentBuild.result='FAILURE'
             notifyBuild(currentBuild.result, "At Stage Test", "", commit_Email)
