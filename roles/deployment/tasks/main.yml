@@ -1,17 +1,13 @@
----
-- name: Generate Hash code for configmap file
-  command: "export CONFIG_HASH = (find logstash-configmap.yml -type f|sort | xargs md5sum | md5sum | cut -d' ' -f 1)"
-  
+---  
 - name: Create ElasticSearch if mandatory elastic file exists
   command: "kubectl apply -f elasticsearch.yml"
 
 - name: Apply Configmap for logstash if  logstash-config file exists
   command: "kubectl apply -f logstash-config.yml"
-  when: logstash-config.yml.stat.exists == True
+
 
 - name: Create deployment  for logstash if  logstash-deployment file exists
   command: " envsubst '${CONFIG_HASH}' < logstash.yml \ | kubectl apply -f -"
-  when: logstash-deployment.yml.stat.exists == True
  
 - name: Create Filebeats for ELK if filebeats file exists
   command: "kubectl apply -f filebeats.yaml"
